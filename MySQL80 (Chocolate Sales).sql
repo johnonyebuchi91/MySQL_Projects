@@ -19,7 +19,7 @@ FROM chocolate_sales.chocolate_sale_1;
 UPDATE chocolate_sales.chocolate_sale_1
 SET `Date` = STR_TO_DATE(`Date`, '%m/%d/%Y');
 
-
+--Modifying Date Column
 ALTER TABLE chocolate_sales.chocolate_sale_1
 MODIFY COLUMN `Date` DATE;
 
