@@ -25,7 +25,7 @@ WITH duplicate_cte AS (
 )
 SELECT * FROM duplicate_cte WHERE Row_Num > 1;
 
--- 3. Creating a New Clean Table and Handling Duplicates
+-- 3. Creating a New Clean Table
 CREATE TABLE layoffs_2 (
     company TEXT,
     location TEXT,
@@ -39,48 +39,60 @@ CREATE TABLE layoffs_2 (
     Row_Num INT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- 4. Inserting Data with Row Number for Deduplication
 INSERT INTO layoffs_2
 SELECT *, ROW_NUMBER() OVER(
 PARTITION BY company, location, total_laid_off, percentage_laid_off, `date`, stage, country, funds_raised) AS Row_Num
 FROM layoffs_1;
 
+SELECT * FROM layoffs_2;
+
+-- 5. Removing Duplicate Entries
 DELETE FROM layoffs_2 WHERE Row_Num > 1;
 
--- 4. Cleaning Company Names and Industries
-SELECT company, (TRIM(company)) FROM layoffs_2;
+SELECT * FROM layoffs_2;
+
+-- 6. Cleaning Company Names
+SELECT company, TRIM(company) FROM layoffs_2;
 UPDATE layoffs_2 SET company = TRIM(company);
 
+-- 7. Extracting Unique Industry and Country Names
 SELECT DISTINCT (industry) FROM layoffs_2 ORDER BY 1;
 SELECT DISTINCT (country) FROM layoffs_2 ORDER BY 1;
 
--- 5. Formatting the Date Column
+-- 8. Formatting the Date Column
 SELECT `date`, STR_TO_DATE(`date`, '%m/%d/%Y') FROM layoffs_2;
 UPDATE layoffs_2 SET `date` = STR_TO_DATE(`date`, '%m/%d/%Y');
 ALTER TABLE layoffs_2 MODIFY COLUMN `date` DATE;
+SELECT `date` FROM layoffs_2;
 
--- 6. Identifying and Handling Missing Values
+-- 9. Identifying and Handling Missing Values
 SELECT COUNT(percentage_laid_off) AS Null_Percentage FROM layoffs_2 WHERE percentage_laid_off IS NULL;
 SELECT COUNT(total_laid_off) AS Null_Total FROM layoffs_2 WHERE total_laid_off IS NULL;
 
 SELECT DISTINCT percentage_laid_off, total_laid_off FROM layoffs_2;
 SELECT COUNT(percentage_laid_off) FROM layoffs_2 WHERE percentage_laid_off = '';
 SELECT COUNT(total_laid_off) FROM layoffs_2 WHERE total_laid_off = '';
+SELECT * FROM layoffs_2 WHERE percentage_laid_off = '' AND total_laid_off = '';
 
-UPDATE layoffs_2 SET total_laid_off = NULL WHERE total_laid_off = '';
-UPDATE layoffs_2 SET percentage_laid_off = NULL WHERE percentage_laid_off = '';
-
-DELETE FROM layoffs_2 WHERE percentage_laid_off IS NULL AND total_laid_off IS NULL;
-
--- 7. Handling Industry Null Values
-SELECT COUNT(industry) FROM layoffs_2 WHERE industry = NULL;
+-- 10. Handling Missing Industry Values
+SELECT COUNT(industry) FROM layoffs_2 WHERE industry IS NULL;
 UPDATE layoffs_2 SET industry = NULL WHERE industry = '';
 SELECT DISTINCT company, industry FROM layoffs_2 WHERE industry = '' OR industry IS NULL;
 
--- 8. Validating Data Integrity
+-- 11. Validating Data Integrity
 SELECT * FROM layoffs_2 WHERE company = 'Appsmith';
 SELECT * FROM layoffs_2 WHERE total_laid_off = '' AND percentage_laid_off = '';
+
+-- 12. Handling Null Values in Layoff Columns
+UPDATE layoffs_2 SET total_laid_off = NULL WHERE total_laid_off = '';
+UPDATE layoffs_2 SET percentage_laid_off = NULL WHERE percentage_laid_off = '';
 SELECT DISTINCT(company), percentage_laid_off, total_laid_off FROM layoffs_2 
 WHERE percentage_laid_off IS NULL AND total_laid_off IS NULL;
+DELETE FROM layoffs_2 WHERE percentage_laid_off IS NULL AND total_laid_off IS NULL;
 
--- 9. Final Cleanup - Dropping Unnecessary Columns
+-- 13. Final Cleanup - Dropping Unnecessary Columns
 ALTER TABLE layoffs_2 DROP COLUMN Row_Num;
+
+-- 14. Reviewing Final Cleaned Dataset
+SELECT * FROM layoffs_2;
