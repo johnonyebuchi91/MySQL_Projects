@@ -76,7 +76,7 @@ FROM drinks_dataset_updated
 WHERE Boxes_Shipped > 500
 ORDER BY Boxes_Shipped DESC;
 
-
+---CREATE PROCEDURE Search_Drinks_By_Location--
 DROP PROCEDURE IF EXISTS Search_Drinks_By_Location;
 DELIMITER $$
 CREATE PROCEDURE Search_Drinks_By_Location()
@@ -87,7 +87,6 @@ BEGIN
 END$$
 DELIMITER ;
 
-
 ---CREATE A VIEW showing drink name, country, customer age, and gender where boxes shipped > 500--
 CREATE VIEW High_Shipped_Drinks AS
 SELECT Drink_Name, 
@@ -97,7 +96,5 @@ SELECT Drink_Name,
 FROM drinks_dataset_updated
 WHERE Boxes_Shipped > 500;
 
+--Check Created View --
 SELECT * FROM High_Shipped_Drinks;
-
-SELECT*
-FROM drinks_dataset_updated;
